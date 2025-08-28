@@ -1,6 +1,6 @@
 {
-  "name": "Spider",
-  "description": "MCP client and conversation repository",
+  "name": "spider",
+  "description": "The central orchestrator for the web of LLM-powered applications on Hyperware",
   "image": "https://raw.githubusercontent.com/hyperware-ai/spider/refs/heads/master/assets/spider-512-y.png",
   "properties": {
     "package_name": "spider",
@@ -13,6 +13,12 @@
     "wit_version": 1,
     "dependencies": [
         "anthropic-api-key-manager:ware.hypr"
+    ],
+    "screenshots": [
+        "https://raw.githubusercontent.com/hyperware-ai/spider/refs/heads/master/assets/spider-chat.png",
+        "https://raw.githubusercontent.com/hyperware-ai/spider/refs/heads/master/assets/spider-mcp-servers.png",
+        "https://raw.githubusercontent.com/hyperware-ai/spider/refs/heads/master/assets/spider-llm-api-keys.png",
+        "https://raw.githubusercontent.com/hyperware-ai/spider/refs/heads/master/assets/spider-chat-api-keys.png"
     ]
   },
   "external_url": "https://github.com/hyperware-ai/spider",
