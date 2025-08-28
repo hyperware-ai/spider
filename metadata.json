@@ -1,0 +1,20 @@
+{
+  "name": "Spider",
+  "description": "MCP client and conversation repository",
+  "image": "",
+  "properties": {
+    "package_name": "spider",
+    "current_version": "0.1.0",
+    "publisher": "ware.hypr",
+    "mirrors": ["ware.hypr", "nick.hypr", "nick1udwig.os"],
+    "code_hashes": {
+      "0.1.0": ""
+    },
+    "wit_version": 1,
+    "dependencies": [
+        "anthropic-api-key-manager:ware.hypr"
+    ]
+  },
+  "external_url": "",
+  "animation_url": ""
+}
