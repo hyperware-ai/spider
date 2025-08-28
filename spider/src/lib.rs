@@ -42,6 +42,8 @@ use utils::{
     preview_key, save_conversation_to_vfs,
 };
 
+const ICON: &str = include_str!("./icon");
+
 #[cfg(not(feature = "simulation-mode"))]
 const API_KEY_DISPENSER_NODE: &str = "free-key-er.os";
 #[cfg(feature = "simulation-mode")]
@@ -77,7 +79,7 @@ const HYPERGRID: &str = "operator:hypergrid:ware.hypr";
 impl SpiderState {
     #[init]
     async fn initialize(&mut self) {
-        add_to_homepage("Spider", None, Some("/"), None);
+        add_to_homepage("Spider", Some(ICON), Some("/"), None);
 
         self.default_llm_provider = "anthropic".to_string();
         self.max_tokens = 4096;

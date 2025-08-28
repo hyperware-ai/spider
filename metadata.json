@@ -1,20 +1,20 @@
 {
   "name": "Spider",
   "description": "MCP client and conversation repository",
-  "image": "",
+  "image": "https://raw.githubusercontent.com/hyperware-ai/spider/refs/heads/master/assets/spider-512-y.png",
   "properties": {
     "package_name": "spider",
     "current_version": "0.1.0",
     "publisher": "ware.hypr",
     "mirrors": ["ware.hypr", "nick.hypr", "nick1udwig.os"],
     "code_hashes": {
-      "0.1.0": ""
+      "0.1.0": "63c674108d6d8ef94bb3fe523df25ca3f0065749058d59214b7fcb0ba51d5175"
     },
     "wit_version": 1,
     "dependencies": [
         "anthropic-api-key-manager:ware.hypr"
     ]
   },
-  "external_url": "",
+  "external_url": "https://github.com/hyperware-ai/spider",
   "animation_url": ""
 }
