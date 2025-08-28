@@ -2,7 +2,7 @@
 
 Spider is the central orchestrator for the web of LLM-powered applications on Hyperware
 
-<img width="753" height="301" alt="image" src="https://github.com/user-attachments/assets/45c757bd-e4c8-417d-a195-312c4e50fdbb" />
+![spider](https://raw.githubusercontent.com/hyperware-ai/spider/refs/heads/master/assets/spider-512-y.png)
 
 ## Status
 
@@ -27,3 +27,10 @@ kit b --hyperapp && kit s
 cd ~/git/spider
 kit b --hyperapp
 ```
+
+## Screenshots
+
+![chat](https://raw.githubusercontent.com/hyperware-ai/spider/refs/heads/master/assets/spider-chat.png)
+![mcp-servers](https://raw.githubusercontent.com/hyperware-ai/spider/refs/heads/master/assets/spider-mcp-servers.png)
+![api-keys](https://raw.githubusercontent.com/hyperware-ai/spider/refs/heads/master/assets/spider-api-keys.png)
+![llm-api-keys](https://raw.githubusercontent.com/hyperware-ai/spider/refs/heads/master/assets/spider-llm-api-keys.png)
