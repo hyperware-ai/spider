@@ -6,6 +6,7 @@ use chrono::Utc;
 use serde_json::Value;
 use uuid::Uuid;
 
+#[cfg(not(feature = "simulation-mode"))]
 use caller_utils::anthropic_api_key_manager::request_api_key_remote_rpc;
 use hyperprocess_macro::*;
 use hyperware_process_lib::{
@@ -41,6 +42,9 @@ use utils::{
     decrypt_key, discover_mcp_tools, encrypt_key, is_oauth_token, load_conversation_from_vfs,
     preview_key, save_conversation_to_vfs,
 };
+
+mod tool_providers;
+use tool_providers::{ToolProvider, hypergrid::HypergridToolProvider};
 
 const ICON: &str = include_str!("./icon");
 
@@ -89,7 +93,7 @@ impl SpiderState {
         let our_node = our().node.clone();
         println!("Spider MCP client initialized on node: {}", our_node);
 
-        // Check if there's already a hypergrid server
+        // Register Hypergrid tool provider if not already registered
         let has_hypergrid = self
             .mcp_servers
             .iter()
@@ -97,6 +101,15 @@ impl SpiderState {
 
         // Only create the hypergrid MCP server if none exists
         if !has_hypergrid {
+            // Register the Hypergrid tool provider
+            let hypergrid_provider = HypergridToolProvider::new("hypergrid_default".to_string());
+
+            // Get ALL tools from the provider (not filtered)
+            let hypergrid_tools = hypergrid_provider.get_tools(self);
+
+            // Register the provider for later use
+            self.tool_provider_registry.register(Box::new(hypergrid_provider));
+
             let hypergrid_server = McpServer {
                 id: "hypergrid_default".to_string(),
                 name: "Hypergrid".to_string(),
@@ -109,26 +122,7 @@ impl SpiderState {
                     hypergrid_client_id: None,
                     hypergrid_node: None,
                 },
-                tools: vec![
-                    Tool {
-                        name: "hypergrid_authorize".to_string(),
-                        description: "Configure Hypergrid connection credentials. Use this when you receive hypergrid auth strings.".to_string(),
-                        parameters: r#"{"type":"object","properties":{"url":{"type":"string"},"token":{"type":"string"},"client_id":{"type":"string"},"node":{"type":"string"}},"required":["url","token","client_id","node"]}"#.to_string(),
-                        input_schema_json: Some(r#"{"type":"object","properties":{"url":{"type":"string","description":"The base URL for the Hypergrid API"},"token":{"type":"string","description":"The authentication token"},"client_id":{"type":"string","description":"The unique client ID"},"node":{"type":"string","description":"The Hyperware node name"}},"required":["url","token","client_id","node"]}"#.to_string()),
-                    },
-                    Tool {
-                        name: "hypergrid_search".to_string(),
-                        description: "Search the Hypergrid provider registry for available data providers.".to_string(),
-                        parameters: r#"{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}"#.to_string(),
-                        input_schema_json: Some(r#"{"type":"object","properties":{"query":{"type":"string","description":"Search query for providers"}},"required":["query"]}"#.to_string()),
-                    },
-                    Tool {
-                        name: "hypergrid_call".to_string(),
-                        description: "Call a Hypergrid provider with arguments to retrieve data.".to_string(),
-                        parameters: r#"{"type":"object","properties":{"providerId":{"type":"string"},"providerName":{"type":"string"},"callArgs":{"type":"array","items":{"type":"array","items":{"type":"string"}}}},"required":["providerId","providerName","callArgs"]}"#.to_string(),
-                        input_schema_json: Some(r#"{"type":"object","properties":{"providerId":{"type":"string","description":"The provider ID"},"providerName":{"type":"string","description":"The provider name"},"callArgs":{"type":"array","items":{"type":"array","items":{"type":"string"}},"description":"Arguments as array of [key, value] pairs"}},"required":["providerId","providerName","callArgs"]}"#.to_string()),
-                    },
-                ],
+                tools: hypergrid_tools,
                 connected: true, // Always mark as connected
             };
 
@@ -290,6 +284,7 @@ impl SpiderState {
         }
 
         // Check if we need to request a free API key
+        #[cfg(not(feature = "simulation-mode"))]
         if self.api_keys.is_empty() {
             println!("Spider: No API keys configured, requesting free trial key...");
 
@@ -956,27 +951,14 @@ impl SpiderState {
             self.hypergrid_connections
                 .insert(request.server_id.clone(), hypergrid_conn);
 
-            // Define the hypergrid tools
-            let hypergrid_tools = vec![
-                Tool {
-                    name: "authorize".to_string(),
-                    description: "Configure the hypergrid connection credentials".to_string(),
-                    parameters: r#"{"type":"object","properties":{"url":{"type":"string"},"token":{"type":"string"},"client_id":{"type":"string"},"node":{"type":"string"}},"required":["url","token","client_id","node"]}"#.to_string(),
-                    input_schema_json: Some(r#"{"type":"object","properties":{"url":{"type":"string","description":"The base URL for the Hypergrid API"},"token":{"type":"string","description":"The authentication token"},"client_id":{"type":"string","description":"The unique client ID"},"node":{"type":"string","description":"The Hyperware node name"}},"required":["url","token","client_id","node"]}"#.to_string()),
-                },
-                Tool {
-                    name: "search-registry".to_string(),
-                    description: "Search through hypergrid provider registry".to_string(),
-                    parameters: r#"{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}"#.to_string(),
-                    input_schema_json: Some(r#"{"type":"object","properties":{"query":{"type":"string","description":"Search query for providers"}},"required":["query"]}"#.to_string()),
-                },
-                Tool {
-                    name: "call-provider".to_string(),
-                    description: "Call a hypergrid provider with arguments".to_string(),
-                    parameters: r#"{"type":"object","properties":{"providerId":{"type":"string"},"providerName":{"type":"string"},"callArgs":{"type":"array","items":{"type":"array","items":{"type":"string"}}}},"required":["providerId","providerName","callArgs"]}"#.to_string(),
-                    input_schema_json: Some(r#"{"type":"object","properties":{"providerId":{"type":"string","description":"The provider ID"},"providerName":{"type":"string","description":"The provider name"},"callArgs":{"type":"array","items":{"type":"array","items":{"type":"string"}},"description":"Arguments as array of [key, value] pairs"}},"required":["providerId","providerName","callArgs"]}"#.to_string()),
-                },
-            ];
+            // Use the HypergridToolProvider to get tools with consistent naming
+            let hypergrid_provider = HypergridToolProvider::new(request.server_id.clone());
+            let hypergrid_tools = hypergrid_provider.get_tools(self);
+
+            // Register the provider if not already registered
+            if !self.tool_provider_registry.has_provider(&request.server_id) {
+                self.tool_provider_registry.register(Box::new(hypergrid_provider));
+            }
 
             // Update the server with hypergrid tools and mark as connected
             if let Some(server) = self
@@ -1919,8 +1901,16 @@ impl SpiderState {
         // Execute the tool based on transport type
         match server.transport.transport_type.as_str() {
             "hypergrid" => {
+                // Map old tool names to new ones for backward compatibility
+                let normalized_tool_name = match tool_name {
+                    "authorize" => "hypergrid_authorize",
+                    "search-registry" => "hypergrid_search",
+                    "call-provider" => "hypergrid_call",
+                    name => name,
+                };
+
                 // Handle the different hypergrid tools
-                match tool_name {
+                match normalized_tool_name {
                     "hypergrid_authorize" => {
                         println!(
                             "Spider: hypergrid_authorize called for server_id: {}",
@@ -2040,10 +2030,12 @@ impl SpiderState {
                             .get("providerName")
                             .and_then(|v| v.as_str())
                             .ok_or_else(|| "Missing providerName parameter".to_string())?;
+                        // Support both "callArgs" (old) and "arguments" (new) parameter names
                         let call_args = parameters
-                            .get("callArgs")
+                            .get("arguments")
+                            .or_else(|| parameters.get("callArgs"))
                             .and_then(|v| v.as_array())
-                            .ok_or_else(|| "Missing callArgs parameter".to_string())?;
+                            .ok_or_else(|| "Missing arguments parameter".to_string())?;
 
                         // Convert callArgs to Vec<(String, String)>
                         let mut arguments = Vec::new();

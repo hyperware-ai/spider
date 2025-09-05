@@ -1,4 +1,4 @@
-import { ApiError, exchangeOauthToken, refreshOauthToken } from '@caller-utils';
+import { ApiError, exchange_oauth_token as exchangeOauthToken, refresh_oauth_token as refreshOauthToken } from '@caller-utils';
 
 export namespace AuthAnthropic {
   const CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
@@ -15,11 +15,11 @@ export namespace AuthAnthropic {
     };
 
     const verifier = generateRandomString(32);
-    
+
     const encoder = new TextEncoder();
     const data = encoder.encode(verifier);
     const hash = await crypto.subtle.digest('SHA-256', data);
-    
+
     const challenge = btoa(String.fromCharCode(...new Uint8Array(hash)))
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
@@ -40,7 +40,7 @@ export namespace AuthAnthropic {
     url.searchParams.set("code_challenge", pkce.challenge);
     url.searchParams.set("code_challenge_method", "S256");
     url.searchParams.set("state", pkce.verifier);
-    
+
     return {
       url: url.toString(),
       verifier: pkce.verifier,
@@ -54,7 +54,7 @@ export namespace AuthAnthropic {
         code: code,
         verifier: verifier,
       });
-      
+
       return result;
     } catch (error) {
       if (error instanceof ApiError) {
@@ -70,7 +70,7 @@ export namespace AuthAnthropic {
       const result = await refreshOauthToken({
         refreshToken: refreshToken,
       });
-      
+
       return result;
     } catch (error) {
       throw new Error("Failed to refresh token");

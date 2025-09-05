@@ -5,6 +5,8 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::tool_providers::ToolProviderRegistry;
+
 #[derive(Default, Serialize, Deserialize)]
 pub struct SpiderState {
     pub api_keys: Vec<(String, ApiKey)>,
@@ -30,6 +32,8 @@ pub struct SpiderState {
     pub hypergrid_connections: HashMap<String, HypergridConnection>, // server_id -> hypergrid connection
     #[serde(skip)]
     pub show_trial_key_notification: bool, // Flag to show trial key notification popup
+    #[serde(skip)]
+    pub tool_provider_registry: ToolProviderRegistry, // Registry for modular tool providers
 }
 
 #[derive(Clone, Debug)]
